@@ -4,14 +4,12 @@ muda: 4
 terima: 4
 kasih: 4
 indonesia: 2
-amas: 2
+emas: 2
 teman: 2
 ucapkan: 2
 senang: 2
 orang: 2
 bersukur: 1
-2020: 1
-2030: 1
 bonus: 1
 demografi: 1
 penduduk: 1
@@ -22,7 +20,7 @@ produktifitas: 1
 nasional: 1
 peluang: 1
 terbuka: 1
-labor: 1
+lebar: 1
 hormati: 1
 terulang: 1
 kejakeras: 1

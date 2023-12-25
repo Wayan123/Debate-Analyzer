@@ -4,6 +4,8 @@ from deepface import DeepFace
 import imutils
 import argparse
 import time
+import imageio
+
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-v", "--video", required=True, help="video path")
@@ -18,12 +20,12 @@ cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
 output_file = "emotion_data.txt"
 output_video_file = "output_video.mp4"
 
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-output_video = cv2.VideoWriter(output_video_file, fourcc, 30, (1000, 563))
-
 
 video_path = args["video"]
 vs = cv2.VideoCapture(video_path)
+input_fps = vs.get(cv2.CAP_PROP_FPS)
+output_video = imageio.get_writer(
+    output_video_file, fps=input_fps, macro_block_size=1)
 
 
 def detect_faces(frame, net):
@@ -37,7 +39,7 @@ def detect_faces(frame, net):
     for i in range(0, detections.shape[2]):
         confidence = detections[0, 0, i, 2]
 
-        if confidence > 0.7:
+        if confidence > 0.8:
             box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
             (startX, startY, endX, endY) = box.astype("int")
 
@@ -69,8 +71,9 @@ emotion_data = {
     'disgust': 0
 }
 frame_count = 0
-start_time = time.time()
-interval = 1
+prev_second = -1
+current_second = -1
+dominant_emotion_current_second = None
 
 
 while True:
@@ -112,14 +115,21 @@ while True:
         frame_count += 1
 
         # Log emotions every 'interval' seconds
-        if time.time() - start_time >= interval:
-            if dominant_emotion:
+        current_time = time.time()
+        current_second = int(current_time)
+
+        if current_second != prev_second:
+            prev_second = current_second
+            dominant_emotion_current_second = max(
+                emotion_data, key=emotion_data.get)
+            emotion_data = {k: 0 for k in emotion_data}
+
+            if dominant_emotion_current_second:
                 with open(output_file, 'a') as f:
-                    f.write(f"{dominant_emotion}\n")
-            start_time = time.time()
+                    f.write(f"{dominant_emotion_current_second}\n")
 
         # Draw a black box for the dominant emotion in the top left corner of the window
-        cv2.rectangle(frame, (0, 0), (480, 40), (0, 0, 0), -1)
+        cv2.rectangle(frame, (0, 0), (500, 40), (0, 0, 0), -1)
         cv2.putText(frame, f'Dominant Facial Expression: {dominant_emotion}', (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.85, (0, 255, 0), 2)
 
@@ -136,7 +146,8 @@ while True:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 1)
             y_text += 20
 
-    output_video.write(frame)
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    output_video.append_data(frame_rgb)
 
     cv2.imshow(window_name, frame)
 
@@ -145,6 +156,6 @@ while True:
     if key == ord("q"):
         break
 
-
+output_video.close()
 cv2.destroyAllWindows()
 vs.release()

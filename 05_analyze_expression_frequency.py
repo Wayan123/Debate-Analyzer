@@ -1,7 +1,8 @@
 from collections import Counter
 
 # Read the emotion data from the file
-file_path = 'emotion_data.txt'  # Specify the path to your emotion data file
+# Specify the path to your emotion data file
+file_path = 'emotion_data_mahfud.txt'
 with open(file_path, 'r') as f:
     emotion_data = f.read().strip().split('\n')
 
